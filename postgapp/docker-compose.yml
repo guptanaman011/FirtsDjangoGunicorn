@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: ./postgapp
+    command: gunicorn --pythonpath /postgapp postgapp.wsgi --bind 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  db:
+    image: postgres
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    user: root
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postres
+      POSTGRES_PASSWORD: adminp
+      POSTGRES_DB: postgappdb
+      PGDATA: /tmp
+      http_proxy: ''
+      https_proxy: ''
+      no_proxy: ''
+    # environment:
+    # -  POSTGRES_HOST_AUTH_METHOD=trust
+    # -  POSTGRES_DB=postgappdb
+    # -  POSTGRES_USER=postgres
+    # -  POSTGRES_PASSWORD=adminp
+    # -  POSTGRES_HOST=192.168.1.83
+    # -  POSTGRES_PORT=5432
+    container_name: postgres_db
+    # ports:
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - react_build:/react/build
+    depends_on:
+      - backend
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:8080
+    volumes:
+      - ./nginx/nginx-setup.conf:/etc/nginx/conf.d
+      - react_build:/var/www/react
+    depends_on:
+      - frontend
+volumes:
+  react_build:  
